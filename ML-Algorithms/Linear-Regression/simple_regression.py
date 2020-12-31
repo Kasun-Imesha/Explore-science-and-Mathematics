@@ -41,13 +41,13 @@ def update_weights(X, Y, m, b, lr):
         db +=  -2*(yi - (m*xi + b))
     
     # Update weights and bias
-    m -= lr * dm
-    b -= lr * db
+    m -= lr * (dm/N)
+    b -= lr * (db/N)
     
     return m, b
 
-
-def train(X, Y, lr = 1e-7, max_error = 21, num_iter = 100):
+# Find the weights and bias coefficients
+def train(X, Y, lr = 1e-7, max_error = 20, num_iter = 100):
     cost_history = []
     
     # Initialize weights and bias to zero (Not necessary to be zero)
@@ -63,8 +63,8 @@ def train(X, Y, lr = 1e-7, max_error = 21, num_iter = 100):
         
         cost_history.append(error)
         
-        # Print results in every 10 iterations
-        if i % 10 == 0:
+        # Print results in every 50 iterations
+        if i % 50 == 0:
             print('[DEBUG] Iteration: {} \t weights: {} \t bias: {} \t error: {}'.format(i, m, b, error))
         
         if error < max_error:
@@ -81,29 +81,40 @@ def plot_results(history):
     plt.plot(history)
     plt.xlabel('number of iterations')
     plt.ylabel('Error - MSE')
-    plt.xlim(5, len(history))
     plt.ylim(0, 1000)
     plt.show()
     
+    
+# Evaluvate how well model has learnt
+def evaluate(X, Y, W , b):
+    y_pred = predict(X, W, b)
+    
+    sst = np.sum((Y-Y.mean())**2)
+    ssr = np.sum((y_pred-Y)**2)
+    r2 = 1-(ssr/sst)
+    return(r2)
+
 
 # Main function
 def main():
-    X =np.random.sample(50)*50
+    X =np.random.sample(150)*50
    
-    Y = 5 * X + 2
+    Y = 50 * X - 25
     
-    noise = np.random.normal(0, 4.5, Y.shape)
+    noise = np.random.normal(0, 5, Y.shape)
     Y_noisy = Y + noise
     
+    X_train, y_train, X_test, y_test = X[:100], Y_noisy[:100], X[100:], Y_noisy[100:]
     
+    weight, bias, history = train(X_train, y_train, num_iter = 10000, lr=0.0001)
     
-    weight, bias, history = train(X, Y_noisy, num_iter = 1000, lr=0.000001)
+    print('r2 score: {}'.format(evaluate(X_test, y_test, weight, bias)))
     
-    y_pred = np.array([predict(x, weight, bias) for x in X])
+    y_pred = np.array([predict(x, weight, bias) for x in X_test])
     
     plot2 = plt.figure(2)
-    plt.scatter(X, Y_noisy)
-    plt.plot(X, y_pred, 'r')
+    plt.scatter(X_test, y_test)
+    plt.plot(X_test, y_pred, 'r')
     
     plot_results(history)
     
