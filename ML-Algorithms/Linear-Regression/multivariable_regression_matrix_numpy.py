@@ -6,11 +6,12 @@ Created on Thu Dec 31 11:24:18 2020
 @author: Explore Science and Mathematics
 """
 
-from sklearn.model_selection import train_test_split 
-import matplotlib.pyplot as plt
-from sklearn import datasets
-import numpy as np
-import pandas as pd
+from sklearn.model_selection import train_test_split # to split the dataset into train-set and test-set
+import matplotlib.pyplot as plt # to plot the graphs
+from sklearn import datasets # to import 'boston housing' dataset
+import numpy as np # for math operations
+import pandas as pd # to import 'power plant' dataset
+
 
 # z-score normalization
 def z_normalize(X):
@@ -62,8 +63,9 @@ def train(X, Y, lr = 1e-7, max_error = 20, num_iter = 100):
     # Initialize weights and bias to zero (Not necessary to be zero)
     W = np.zeros((N,1))
     
-    # X = z_normalize(X)
+    interval = int(num_iter*0.01)
     
+    print('[INFO] Training Started ...')
     for i in range(num_iter):
         # Run gradient descent to update the weights
         W = update_weights(X, Y, W, lr)
@@ -73,15 +75,15 @@ def train(X, Y, lr = 1e-7, max_error = 20, num_iter = 100):
         
         cost_history.append(error)
         
-        # Print results in every 50 iterations
-        if i % 50 == 0:
+        # Print intermediate results
+        if i % interval == 0:
             print('[DEBUG] Iteration: {} \t weights: {} \t error: {}'.format(i, W.ravel(), error))
         
         if error < max_error:
             print('[DEBUG] Iteration: {} \t weights: {} \t error: {}'.format(i, W.ravel(), error))
             print('[INFO] Early stopping ...')
             return W, cost_history
-        
+    print('[INFO] Training Completed ...')
     return W, cost_history
 
 # Plot the training results
@@ -90,6 +92,7 @@ def plot_results(history):
     plt.plot(history)
     plt.xlabel('number of iterations')
     plt.ylabel('Error - MSE')
+    plt.title('Error variation')
     plt.ylim(0, 1000)
     plt.show()
     
@@ -105,6 +108,9 @@ def evaluate(X,Y,W):
     
 
 def main():
+    lr = 0.001 # learning rate
+    epochs = 10000 # number of epochs/iterations should be trained
+    
     # load the boston dataset 
     boston = datasets.load_boston(return_X_y=False) 
       
@@ -114,14 +120,20 @@ def main():
     
     y = np.expand_dims(y, axis=1)
     X = z_normalize(X)
+    
+    # add extra column of 1's to merge the bias
+    ones = np.ones((len(X), 1))
+    X = np.hstack((X, ones))
       
     # splitting X and y into training and testing sets 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, 
                                                         random_state=1) 
-    print(X_train[:,:5])
-    print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
     
-    weights, history = train(X_train, y_train, num_iter = 10000, lr=0.001)
+    print('Part of the dataset:')
+    print(X_train[:,:5])
+    # print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
+    
+    weights, history = train(X_train, y_train, num_iter = epochs, lr=lr)
     
     print('r2 score: {}'.format(evaluate(X_test,y_test,weights)))
     
@@ -129,11 +141,17 @@ def main():
     
 
 def main2():
+    lr = 0.001 # learning rate
+    epochs = 10000 # number of epochs/iterations should be trained
+    
+    # load the power-plant dataet
     data = pd.read_excel('Data/Folds5x2_pp.xlsx')
+    
+    print('Part of the dataset:')
     print(data.head(5))
     
     data = data.to_numpy()
-    print(data.shape)
+    # print(data.shape)
     
     X = data[:,:4]
     y = data[:,-1]
@@ -143,15 +161,16 @@ def main2():
     # Data normalization
     X = z_normalize(X)
     
+    # add extra column of 1's to merge the bias
     ones = np.ones((len(X), 1))
     X = np.hstack((X, ones))
     
     # splitting X and y into training and testing sets 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, 
                                                         random_state=1)
-    print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
+    # print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
     
-    weights, history = train(X_train, y_train, num_iter = 10000, lr=0.001)
+    weights, history = train(X_train, y_train, num_iter = epochs, lr=lr)
     
     print('r2 score: {}'.format(evaluate(X_test,y_test,weights)))
     
@@ -159,6 +178,10 @@ def main2():
     
     
 if __name__ == "__main__": 
+    print('----'*30)
+    print("[INSTRUCTION] For 'Boston-housing' dataset demo uncomment main() and for 'power-plant' dataset demo uncomment main2()")
+    print('----'*30)
+    
     # main() 
     main2()
 

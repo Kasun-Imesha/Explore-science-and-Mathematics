@@ -54,6 +54,9 @@ def train(X, Y, lr = 1e-7, max_error = 20, num_iter = 100):
     m = 0.0
     b = 0.0
     
+    interval = int(num_iter*0.01)
+    print('[INFO] Training Started ...')
+    
     for i in range(num_iter):
         # Run gradient descent to update the weights
         m, b = update_weights(X, Y, m, b, lr)
@@ -63,25 +66,26 @@ def train(X, Y, lr = 1e-7, max_error = 20, num_iter = 100):
         
         cost_history.append(error)
         
-        # Print results in every 50 iterations
-        if i % 50 == 0:
+        # Print intermediate results
+        if i % interval == 0:
             print('[DEBUG] Iteration: {} \t weights: {} \t bias: {} \t error: {}'.format(i, m, b, error))
         
         if error < max_error:
             print('[DEBUG] Iteration: {} \t weights: {} \t bias: {} \t error: {}'.format(i, m, b, error))
             print('[INFO] Early stopping ...')
             return m, b, cost_history
-        
+    print('[INFO] Training Completed ...')  
     return m, b, cost_history
 
 
 # Plot the training results
-def plot_results(history):
+def plot_results(history, noise_std):
     plot1 = plt.figure(1)
     plt.plot(history)
     plt.xlabel('number of iterations')
     plt.ylabel('Error - MSE')
-    plt.ylim(0, 1000)
+    plt.title('Error variation')
+    plt.ylim(0, noise_std**2*5)
     plt.show()
     
     
@@ -97,16 +101,20 @@ def evaluate(X, Y, W , b):
 
 # Main function
 def main():
+    lr = 0.0003 # learning rate
+    epochs = 50000 # number of epochs/iterations should be trained
+    noise_std = 50 # standard-deviation of the added noise
+    
     X =np.random.sample(150)*50
    
-    Y = 50 * X - 25
+    Y = 50 * X - 100
     
-    noise = np.random.normal(0, 5, Y.shape)
+    noise = np.random.normal(0, noise_std, Y.shape)
     Y_noisy = Y + noise
     
     X_train, y_train, X_test, y_test = X[:100], Y_noisy[:100], X[100:], Y_noisy[100:]
     
-    weight, bias, history = train(X_train, y_train, num_iter = 10000, lr=0.0001)
+    weight, bias, history = train(X_train, y_train, num_iter = epochs, lr=lr)
     
     print('r2 score: {}'.format(evaluate(X_test, y_test, weight, bias)))
     
@@ -116,7 +124,7 @@ def main():
     plt.scatter(X_test, y_test)
     plt.plot(X_test, y_pred, 'r')
     
-    plot_results(history)
+    plot_results(history, noise_std)
     
 
 if __name__ == "__main__": 
